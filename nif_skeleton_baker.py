@@ -4,12 +4,14 @@ import json
 import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from pathlib import Path
 
 try:
     from jslot_to_transforms import extract_transforms
 except ImportError:
     print("ERROR: Could not import extract_transforms from jslot_to_transforms.py")
     sys.exit(1)
+
 
 def apply_transforms_to_nif(transforms_dict, nif_in_path, nif_out_path, clamp_value=None):
     from collections import defaultdict
@@ -97,16 +99,15 @@ def apply_transforms_to_nif(transforms_dict, nif_in_path, nif_out_path, clamp_va
     except Exception as e:
         raise RuntimeError(f"ERROR: could not save NIF file {nif_out_path}: {e}")
 
+
 def main():
     root = tk.Tk()
     root.withdraw()
 
     messagebox.showinfo(
         "NIF Skeleton Baker",
-        "You will be prompted to select:\n\n"
-        "  • 1) a RaceMenu .jslot file\n"
-        "  • 2) an input skeleton .nif file\n"
-        "Then choose an output filename for the baked .nif."
+        "Select a RaceMenu .jslot file and an input skeleton .nif.\n"
+        "The baked .nif will be saved alongside the original with 'BAKED' appended."
     )
 
     jslot_path = filedialog.askopenfilename(
@@ -123,13 +124,9 @@ def main():
     if not nif_in_path:
         sys.exit("No input .nif selected. Exiting.")
 
-    nif_out_path = filedialog.asksaveasfilename(
-        title="NIF Skeleton Baker: Save baked .nif as…",
-        defaultextension=".nif",
-        filetypes=[("NIF File", "*.nif"), ("All files", "*.*")]
-    )
-    if not nif_out_path:
-        sys.exit("No output path provided. Exiting.")
+    inp = Path(nif_in_path)
+    output_name = inp.stem + "BAKED" + inp.suffix
+    nif_out_path = str(inp.parent / output_name)
 
     try:
         with open(jslot_path, "r", encoding="utf-8") as fp:
@@ -152,8 +149,12 @@ def main():
         messagebox.showerror("NIF Skeleton Baker: Error", f"Failed to bake skeleton .nif:\n{e}")
         sys.exit(1)
 
-    messagebox.showinfo("NIF Skeleton Baker", f"Successfully wrote baked .nif to:\n\n{nif_out_path}")
+    messagebox.showinfo(
+        "NIF Skeleton Baker",
+        f"Successfully wrote baked .nif to:\n{nif_out_path}"
+    )
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
